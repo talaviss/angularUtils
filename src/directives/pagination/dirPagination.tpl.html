@@ -15,4 +15,11 @@
     <li ng-if="boundaryLinks"  ng-class="{ disabled : pagination.current == pagination.last }">
         <a href="" ng-click="setCurrent(pagination.last)">&raquo;</a>
     </li>
+    <select ng-init="getItemsPerPage(this)" ng-model="selectedItem" ng-if="1 < pages.length"  ng-change="setItemsPerPage(this)" class="m-l-small direction-right"   >
+        <option>5</option>
+        <option selected>10</option>
+        <option>20</option>
+        <option>50</option>
+        <option>100</option>
+    </select>
 </ul>

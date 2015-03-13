@@ -14,7 +14,7 @@
  * Copyright 2014 Michael Bromley <michael@michaelbromley.co.uk>
  */
 
-(function() {
+(function () {
 
     /**
      * Config
@@ -27,19 +27,20 @@
      */
     var module;
     try {
+ 
         module = angular.module(moduleName);
-    } catch(err) {
+    } catch (err) {
         // named module does not exist, so create one
         module = angular.module(moduleName, []);
     }
 
-    module.directive('dirPaginate', ['$compile', '$parse', 'paginationService', function($compile, $parse, paginationService) {
+    module.directive('dirPaginate', ['$compile', '$parse', 'paginationService', function ($compile, $parse, paginationService) {
 
-        return  {
+        return {
             terminal: true,
             multiElement: true,
             priority: 5000, // This setting is used in conjunction with the later call to $compile() to prevent infinite recursion of compilation
-            compile: function dirPaginationCompileFn(tElement, tAttrs){
+            compile: function dirPaginationCompileFn(tElement, tAttrs) {
 
                 var expression = tAttrs.dirPaginate;
                 // regex taken directly from https://github.com/angular/angular.js/blob/master/src/ng/directive/ngRepeat.js#L211
@@ -57,7 +58,7 @@
                 var rawId = tAttrs.paginationId || DEFAULT_ID;
                 paginationService.registerInstance(rawId);
 
-                return function dirPaginationLinkFn(scope, element, attrs){
+                return function dirPaginationLinkFn(scope, element, attrs) {
 
                     // Now that we have access to the `scope` we can interpolate any expression given in the paginationId attribute and
                     // potentially register a new ID if it evaluates to a different value than the rawId.
@@ -81,7 +82,7 @@
                         attrs.$set('ngRepeat', repeatExpression);
                     }
 
-                    var compiled =  $compile(element, false, 5000); // we manually compile the element again, as we have now added ng-repeat. Priority less than 5000 prevents infinite recursion of compiling dirPaginate
+                    var compiled = $compile(element, false, 5000); // we manually compile the element again, as we have now added ng-repeat. Priority less than 5000 prevents infinite recursion of compiling dirPaginate
 
                     var currentPageGetter;
                     if (attrs.currentPage) {
@@ -96,7 +97,7 @@
 
                     if (typeof attrs.totalItems !== 'undefined') {
                         paginationService.setAsyncModeTrue(paginationId);
-                        scope.$watch(function() {
+                        scope.$watch(function () {
                             return $parse(attrs.totalItems)(scope);
                         }, function (result) {
                             if (0 <= result) {
@@ -104,9 +105,9 @@
                             }
                         });
                     } else {
-                        scope.$watchCollection(function() {
+                        scope.$watchCollection(function () {
                             return collectionGetter(scope);
-                        }, function(collection) {
+                        }, function (collection) {
                             if (collection) {
                                 paginationService.setCollectionLength(paginationId, collection.length);
                             }
@@ -117,10 +118,13 @@
                     compiled(scope);
                 };
             }
-        }; 
+        };
     }]);
 
-    module.directive('dirPaginationControls', ['paginationService', 'paginationTemplate', function(paginationService, paginationTemplate) {
+
+
+
+    module.directive('dirPaginationControls', ['paginationService', 'paginationTemplate', function (paginationService, paginationTemplate) {
 
         var numberRegex = /^\d+$/;
 
@@ -160,7 +164,7 @@
                 } else {
                     pages.push(pageNumber);
                 }
-                i ++;
+                i++;
             }
             return pages;
         }
@@ -175,7 +179,7 @@
          * @returns {*}
          */
         function calculatePageNumber(i, currentPage, paginationRange, totalPages) {
-            var halfWay = Math.ceil(paginationRange/2);
+            var halfWay = Math.ceil(paginationRange / 2);
             if (i === paginationRange) {
                 return totalPages;
             } else if (i === 1) {
@@ -195,21 +199,21 @@
 
         return {
             restrict: 'AE',
-            templateUrl: function(elem, attrs) {
+            templateUrl: function (elem, attrs) {
                 return attrs.templateUrl || paginationTemplate.getPath();
             },
             scope: {
                 maxSize: '=?',
                 onPageChange: '&?',
                 paginationId: '=?'
-            },
+            },        
             link: function dirPaginationControlsLinkFn(scope, element, attrs) {
 
                 // rawId is the un-interpolated value of the pagination-id attribute. This is only important when the corresponding dir-paginate directive has
                 // not yet been linked (e.g. if it is inside an ng-if block), and in that case it prevents this controls directive from assuming that there is
                 // no corresponding dir-paginate directive and wrongly throwing an exception.
-                var rawId = attrs.paginationId ||  DEFAULT_ID;
-                var paginationId = scope.paginationId || attrs.paginationId ||  DEFAULT_ID;
+                var rawId = attrs.paginationId || DEFAULT_ID;
+                var paginationId = scope.paginationId || attrs.paginationId || DEFAULT_ID;
 
                 if (!paginationService.isRegistered(paginationId) && !paginationService.isRegistered(rawId)) {
                     var idMessage = (paginationId !== DEFAULT_ID) ? ' (id: ' + paginationId + ') ' : ' ';
@@ -232,36 +236,48 @@
                     total: 1
                 };
 
-                scope.$watch(function() {
+                scope.$watch(function () {
                     return (paginationService.getCollectionLength(paginationId) + 1) * paginationService.getItemsPerPage(paginationId);
-                }, function(length) {
+                }, function (length) {
                     if (0 < length) {
                         generatePagination();
                     }
                 });
-                
-                scope.$watch(function() {
+
+                scope.$watch(function () {
                     return (paginationService.getItemsPerPage(paginationId));
-                }, function(current, previous) {
+                }, function (current, previous) {
                     if (current != previous && typeof previous !== 'undefined') {
                         goToPage(scope.pagination.current);
                     }
                 });
 
-                scope.$watch(function() {
+                scope.$watch(function () {
                     return paginationService.getCurrentPage(paginationId);
-                }, function(currentPage, previousPage) {
+                }, function (currentPage, previousPage) {
                     if (currentPage != previousPage) {
                         goToPage(currentPage);
                     }
                 });
 
-                scope.setCurrent = function(num) {
+                scope.setCurrent = function (num) {
                     if (isValidPageNumber(num)) {
                         paginationService.setCurrentPage(paginationId, num);
                     }
                 };
 
+                scope.setItemsPerPage = function (cmb) {
+                    var num = parseInt(cmb.selectedItem);
+                    paginationService.setItemsPerPage(paginationId, num);
+                    goToPage(1);        
+                };
+
+
+                scope.getItemsPerPage = function (cmb) {            
+                    var itemsPerPage = paginationService.getItemsPerPage(paginationId);
+                    cmb.selectedItem = 10;
+                    return itemsPerPage;
+                };
                 function goToPage(num) {
                     if (isValidPageNumber(num)) {
                         scope.pages = generatePagesArray(num, paginationService.getCollectionLength(paginationId), paginationService.getItemsPerPage(paginationId), paginationRange);
@@ -270,7 +286,7 @@
 
                         // if a callback has been set, then call it with the page number as an argument
                         if (scope.onPageChange) {
-                            scope.onPageChange({ newPageNumber : num });
+                            scope.onPageChange({ newPageNumber: num });
                         }
                     }
                 }
@@ -309,14 +325,19 @@
         };
     }]);
 
-    module.filter('itemsPerPage', ['paginationService', function(paginationService) {
+    module.filter('itemsPerPage', ['paginationService', function (paginationService) {
 
-        return function(collection, itemsPerPage, paginationId) {
+        return function (collection, itemsPerPage, paginationId) {
             if (typeof (paginationId) === 'undefined') {
                 paginationId = DEFAULT_ID;
             }
             if (!paginationService.isRegistered(paginationId)) {
                 throw 'pagination directive: the itemsPerPage id argument (id: ' + paginationId + ') does not match a registered pagination-id.';
+            }
+
+            var newItemsPerPage = paginationService.getItemsPerPage(paginationId);
+            if (typeof (newItemsPerPage) !== 'undefined' && itemsPerPage != newItemsPerPage && isNaN(newItemsPerPage)===false) {
+                    itemsPerPage = newItemsPerPage;                
             }
             var end;
             var start;
@@ -337,12 +358,12 @@
         };
     }]);
 
-    module.service('paginationService', function() {
+    module.service('paginationService', function () {
 
         var instances = {};
         var lastRegisteredInstance;
 
-        this.registerInstance = function(instanceId) {
+        this.registerInstance = function (instanceId) {
             if (typeof instances[instanceId] === 'undefined') {
                 instances[instanceId] = {
                     asyncMode: false
@@ -351,60 +372,60 @@
             }
         };
 
-        this.isRegistered = function(instanceId) {
+        this.isRegistered = function (instanceId) {
             return (typeof instances[instanceId] !== 'undefined');
         };
 
-        this.getLastInstanceId = function() {
+        this.getLastInstanceId = function () {
             return lastRegisteredInstance;
         };
 
-        this.setCurrentPageParser = function(instanceId, val, scope) {
+        this.setCurrentPageParser = function (instanceId, val, scope) {
             instances[instanceId].currentPageParser = val;
             instances[instanceId].context = scope;
         };
-        this.setCurrentPage = function(instanceId, val) {
+        this.setCurrentPage = function (instanceId, val) {
             instances[instanceId].currentPageParser.assign(instances[instanceId].context, val);
         };
-        this.getCurrentPage = function(instanceId) {
+        this.getCurrentPage = function (instanceId) {
             var parser = instances[instanceId].currentPageParser;
             return parser ? parser(instances[instanceId].context) : 1;
         };
 
-        this.setItemsPerPage = function(instanceId, val) {
+        this.setItemsPerPage = function (instanceId, val) {         
             instances[instanceId].itemsPerPage = val;
         };
-        this.getItemsPerPage = function(instanceId) {
+        this.getItemsPerPage = function (instanceId) {
             return instances[instanceId].itemsPerPage;
         };
 
-        this.setCollectionLength = function(instanceId, val) {
+        this.setCollectionLength = function (instanceId, val) {
             instances[instanceId].collectionLength = val;
         };
-        this.getCollectionLength = function(instanceId) {
+        this.getCollectionLength = function (instanceId) {
             return instances[instanceId].collectionLength;
         };
 
-        this.setAsyncModeTrue = function(instanceId) {
+        this.setAsyncModeTrue = function (instanceId) {
             instances[instanceId].asyncMode = true;
         };
 
-        this.isAsyncMode = function(instanceId) {
+        this.isAsyncMode = function (instanceId) {
             return instances[instanceId].asyncMode;
         };
     });
-    
-    module.provider('paginationTemplate', function() {
 
-        var templatePath = 'directives/pagination/dirPagination.tpl.html';
-        
-        this.setPath = function(path) {
+    module.provider('paginationTemplate', function () {
+
+        var templatePath = '../app/directives/pagination/dirPagination.tpl.html';
+
+        this.setPath = function (path) {
             templatePath = path;
         };
-        
-        this.$get = function() {
+
+        this.$get = function () {
             return {
-                getPath: function() {
+                getPath: function () {
                     return templatePath;
                 }
             };
